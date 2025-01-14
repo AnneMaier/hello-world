@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>윈도우 벽돌 깨기 게임</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="480" height="320"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // 공, 패들, 벽돌 설정
+        const ball = { x: canvas.width / 2, y: canvas.height - 30, dx: 2, dy: -2, radius: 10 };
+        const paddle = { width: 75, height: 10, x: (canvas.width - 75) / 2 };
+        const bricks = [];
+        const brick = { rowCount: 3, columnCount: 5, width: 75, height: 20, padding: 10, offsetTop: 30, offsetLeft: 35 };
+
+        let rightPressed = false, leftPressed = false, score = 0;
+
+        // 벽돌 초기화
+        for (let c = 0; c < brick.columnCount; c++) {
+            bricks[c] = [];
+            for (let r = 0; r < brick.rowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+
+        // 키 입력 처리
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+            if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+        });
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+            if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+        });
+
+        // 공 그리기
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // 패들 그리기
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // 벽돌 그리기
+        function drawBricks() {
+            for (let c = 0; c < brick.columnCount; c++) {
+                for (let r = 0; r < brick.rowCount; r++) {
+                    if (bricks[c][r].status === 1) {
+                        const brickX = c * (brick.width + brick.padding) + brick.offsetLeft;
+                        const brickY = r * (brick.height + brick.padding) + brick.offsetTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+                        ctx.beginPath();
+                        ctx.rect(brickX, brickY, brick.width, brick.height);
+                        ctx.fillStyle = "#0095DD";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        // 충돌 감지
+        function collisionDetection() {
+            for (let c = 0; c < brick.columnCount; c++) {
+                for (let r = 0; r < brick.rowCount; r++) {
+                    const b = bricks[c][r];
+                    if (b.status === 1) {
+                        if (ball.x > b.x && ball.x < b.x + brick.width && ball.y > b.y && ball.y < b.y + brick.height) {
+                            ball.dy = -ball.dy;
+                            b.status = 0;
+                            score++;
+                            if (score === brick.rowCount * brick.columnCount) {
+                                alert("축하합니다! 모든 벽돌을 깼습니다!");
+                                document.location.reload();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 게임 루프
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBricks();
+            drawBall();
+            drawPaddle();
+            collisionDetection();
+
+            // 공 이동
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // 벽 충돌 처리
+            if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
+                ball.dx = -ball.dx;
+            }
+            if (ball.y + ball.dy < ball.radius) {
+                ball.dy = -ball.dy;
+            } else if (ball.y + ball.dy > canvas.height - ball.radius) {
+                if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                    ball.dy = -ball.dy;
+                } else {
+                    alert("게임 오버!");
+                    document.location.reload();
+                }
+            }
+
+            // 패들 이동
+            if (rightPressed && paddle.x < canvas.width - paddle.width) {
+                paddle.x += 7;
+            }
+            if (leftPressed && paddle.x > 0) {
+                paddle.x -= 7;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+	<div align="center">
+	  <p><img src="images/two-rabbit.jpg" alt="두마리 토끼" height="350"></p>
+	  </div>
+</body>
+</html>
+
